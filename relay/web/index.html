@@ -240,8 +240,9 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           <div id="qrcode-container" class="flex justify-center"></div>
         </div>
         <div class="flex items-center gap-2">
-          <input type="text" readonly :value="qrModal.uri" @click=".target.select()" 
-                 class="w-full text-xs font-mono p-2 bg-slate-100 rounded border border-slate-300 text-slate-800 focus:outline-none select-all">
+          <input type="text" readonly :value="qrModal.uri" @click="copyText(qrModal.uri)" 
+                 class="w-full text-xs font-mono p-2 bg-slate-100 rounded border border-slate-300 text-slate-800 focus:outline-none select-all cursor-pointer"
+                 title="点击复制">
           <button @click="copyText(qrModal.uri)" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded shrink-0 font-medium transition">
             复制
           </button>
