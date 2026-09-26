@@ -67,24 +67,46 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         </div>
       </div>
 
-      <!-- Spot 快速部署指令 -->
-      <div class="bg-slate-800/40 p-4 rounded-xl border border-slate-800">
-        <div class="flex justify-between items-center mb-2">
-          <h3 class="text-sm font-semibold text-slate-300">🚀 GCP Spot 创建自动化脚本 (Startup Script)</h3>
-          <button @click="copyText(bootstrapCmd)" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition">
-            {{ copyStatus || '复制指令' }}
-          </button>
+      <!-- Spot 快速部署指令 (可折叠) -->
+      <div class="bg-slate-800/40 rounded-xl border border-slate-800 overflow-hidden">
+        <div class="p-3 md:p-4 flex justify-between items-center cursor-pointer select-none hover:bg-slate-800/60 transition" @click="showScript = !showScript">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 transform transition-transform duration-150" :class="{ 'rotate-90': showScript }">▶</span>
+            <h3 class="text-xs md:text-sm font-semibold text-slate-300">🚀 GCP Spot 启动脚本 (Startup Script)</h3>
+          </div>
+          <div class="flex items-center gap-2">
+            <button @click.stop="copyText(bootstrapCmd)" class="text-xs bg-slate-700 hover:bg-slate-600 px-2.5 py-1 rounded text-slate-200 transition">
+              {{ copyStatus || '复制' }}
+            </button>
+            <span class="text-xs text-slate-400 hidden sm:inline">{{ showScript ? '收起' : '展开' }}</span>
+          </div>
         </div>
-        <pre class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto">{{ bootstrapCmd }}</pre>
+        <div v-show="showScript" class="p-3 pt-0">
+          <pre class="bg-slate-950 p-3 rounded-lg text-xs font-mono text-emerald-400 overflow-x-auto">{{ bootstrapCmd }}</pre>
+        </div>
       </div>
 
-      <!-- Spot 列表 -->
+      <!-- Spot 列表 (默认折叠) -->
       <div class="bg-slate-800/60 rounded-xl border border-slate-800 overflow-hidden">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-          <h2 class="font-semibold text-slate-200">📡 GCP Spot 节点列表</h2>
-          <span class="text-xs text-slate-400">心跳上报 / SOCKS5 1080</span>
+        <div @click="showSpots = !showSpots" 
+             class="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-800/80 transition select-none">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs text-slate-400 transform transition-transform duration-150" :class="{ 'rotate-90': showSpots }">▶</span>
+            <div>
+              <h2 class="font-semibold text-slate-200 text-sm md:text-base flex items-center gap-2">
+                <span>📡 GCP Spot 节点列表</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 font-normal">
+                  {{ stats.onlineSpots }}/{{ spots.length }} 在线
+                </span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">心跳上报 / SOCKS5 1080 · 点击{{ showSpots ? '折叠' : '展开' }}</p>
+            </div>
+          </div>
+          <span class="text-xs text-indigo-400 font-medium">
+            {{ showSpots ? '收起 ▲' : '展开 ▼' }}
+          </span>
         </div>
-        <div class="overflow-x-auto">
+        <div v-show="showSpots" class="border-t border-slate-800 overflow-x-auto">
           <table class="w-full text-left text-sm">
             <thead class="bg-slate-900/50 text-xs text-slate-400 uppercase">
               <tr>
@@ -130,13 +152,27 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         </div>
       </div>
 
-      <!-- 槽位与故障接管状态 -->
+      <!-- 槽位与故障接管状态 (默认折叠) -->
       <div class="bg-slate-800/60 rounded-xl border border-slate-800 overflow-hidden">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-          <h2 class="font-semibold text-slate-200">🔄 内部槽位与自动接管路由</h2>
-          <span class="text-xs text-slate-400">槽位保持固定 · 备用平滑切换</span>
+        <div @click="showSlots = !showSlots" 
+             class="p-4 flex justify-between items-center cursor-pointer hover:bg-slate-800/80 transition select-none">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xs text-slate-400 transform transition-transform duration-150" :class="{ 'rotate-90': showSlots }">▶</span>
+            <div>
+              <h2 class="font-semibold text-slate-200 text-sm md:text-base flex items-center gap-2">
+                <span>🔄 内部槽位与自动接管路由</span>
+                <span class="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-300 font-normal">
+                  {{ slots.length }} 个槽位
+                </span>
+              </h2>
+              <p class="text-xs text-slate-400 mt-0.5">槽位保持固定 · 备用平滑切换 · 点击{{ showSlots ? '折叠' : '展开' }}</p>
+            </div>
+          </div>
+          <span class="text-xs text-indigo-400 font-medium">
+            {{ showSlots ? '收起 ▲' : '展开 ▼' }}
+          </span>
         </div>
-        <div class="overflow-x-auto">
+        <div v-show="showSlots" class="border-t border-slate-800 overflow-x-auto">
           <table class="w-full text-left text-sm">
             <thead class="bg-slate-900/50 text-xs text-slate-400 uppercase">
               <tr>
@@ -175,11 +211,19 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         </div>
       </div>
 
-      <!-- VLESS 用户管理 -->
+      <!-- VLESS 用户管理 (手机端重点优化) -->
       <div class="bg-slate-800/60 rounded-xl border border-slate-800 overflow-hidden">
         <div class="p-4 border-b border-slate-800 flex justify-between items-center">
-          <h2 class="font-semibold text-slate-200">👤 VLESS 用户管理</h2>
-          <button @click="showAddUserModal = true" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-1.5 rounded-lg transition">
+          <div>
+            <h2 class="font-semibold text-slate-200 text-base md:text-lg flex items-center gap-2">
+              <span>👤 VLESS 用户管理</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 font-normal">
+                {{ users.length }} 人
+              </span>
+            </h2>
+            <p class="text-xs text-slate-400 mt-0.5">多用户独立出口 · 一键扫码导入客户端</p>
+          </div>
+          <button @click="showAddUserModal = true" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs md:text-sm px-3.5 py-1.5 rounded-lg font-medium transition shadow-sm">
             + 创建新用户
           </button>
         </div>
@@ -188,32 +232,41 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
             <thead class="bg-slate-900/50 text-xs text-slate-400 uppercase">
               <tr>
                 <th class="p-3">用户名称</th>
-                <th class="p-3">UUID</th>
-                <th class="p-3">绑定槽位</th>
+                <th class="p-3 hidden md:table-cell">UUID</th>
+                <th class="p-3 hidden md:table-cell">绑定槽位</th>
                 <th class="p-3">当前出口 IP</th>
-                <th class="p-3 text-right">操作</th>
+                <th class="p-3 text-right">二维码 / 操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
               <tr v-for="u in users" :key="u.uuid" class="hover:bg-slate-800/30">
-                <td class="p-3 font-medium text-slate-200">{{ u.name }}</td>
-                <td class="p-3 font-mono text-xs text-slate-400">{{ u.uuid }}</td>
-                <td class="p-3 font-mono text-indigo-400">{{ u.slot_port }}</td>
-                <td class="p-3 font-mono text-emerald-400 text-xs">{{ getSlotExitIP(u.slot_port) }}</td>
-                <td class="p-3 text-right space-x-2">
-                  <button @click="showQR(u)" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded transition">
+                <td class="p-3 font-medium text-slate-100">
+                  <div class="text-sm font-semibold text-slate-100">{{ u.name }}</div>
+                  <div class="text-[11px] text-slate-400 font-mono md:hidden mt-0.5">槽位: {{ u.slot_port }}</div>
+                </td>
+                <td class="p-3 font-mono text-xs text-slate-400 hidden md:table-cell">{{ u.uuid }}</td>
+                <td class="p-3 font-mono text-indigo-400 hidden md:table-cell">{{ u.slot_port }}</td>
+                <td class="p-3 font-mono text-xs">
+                  <span class="inline-block px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+                    {{ getSlotExitIP(u.slot_port) }}
+                  </span>
+                </td>
+                <td class="p-3 text-right whitespace-nowrap space-x-1.5 md:space-x-2">
+                  <button @click="showQR(u)" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg font-medium shadow transition">
                     📱 二维码
                   </button>
-                  <button @click="copyText(u.uri)" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2.5 py-1 rounded transition">
-                    📋 复制 URI
+                  <button @click="copyText(u.uri)" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-2 py-1.5 rounded-lg transition" title="复制链接">
+                    <span class="hidden md:inline">📋 复制 URI</span>
+                    <span class="md:hidden">📋</span>
                   </button>
-                  <button @click="deleteUser(u.uuid)" class="text-xs bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded transition">
-                    删除
+                  <button @click="deleteUser(u.uuid)" class="text-xs bg-rose-600/20 hover:bg-rose-600 text-rose-300 hover:text-white px-2 py-1.5 rounded-lg transition" title="删除用户">
+                    <span class="hidden md:inline">删除</span>
+                    <span class="md:hidden">🗑️</span>
                   </button>
                 </td>
               </tr>
               <tr v-if="users.length === 0">
-                <td colspan="5" class="p-6 text-center text-slate-500">暂无用户，点击右上角创建</td>
+                <td colspan="5" class="p-6 text-center text-slate-500">暂无用户，点击右上角「+ 创建新用户」</td>
               </tr>
             </tbody>
           </table>
@@ -278,6 +331,10 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         const newUser = ref({ name: '', slot_port: null });
         const qrModal = ref({ show: false, title: '', uri: '' });
         const spotTesting = ref({});
+
+        const showSpots = ref(false); // 默认折叠
+        const showSlots = ref(false); // 默认折叠
+        const showScript = ref(false); // 默认折叠
 
         const activeConns = ref(0);
 
@@ -496,6 +553,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           adminToken, authorized, spots, slots, users, stats,
           bootstrapCmd, copyStatus, showAddUserModal, newUser, qrModal,
           spotTesting, testSpot, deleteSpot, deleteSlot,
+          showSpots, showSlots, showScript,
           saveToken, logout, refreshData, createUser, deleteUser,
           getSlotExitIP, copyText, showQR, formatTime
         };
