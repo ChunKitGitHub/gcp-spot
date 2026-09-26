@@ -77,6 +77,16 @@ func (r *spotRegistry) AllSpots(timeout time.Duration, now time.Time) []SpotInfo
 	return result
 }
 
+func (r *spotRegistry) Remove(instanceName string) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if _, exists := r.spots[instanceName]; exists {
+		delete(r.spots, instanceName)
+		return true
+	}
+	return false
+}
+
 func (r *spotRegistry) Prune(retention time.Duration, now time.Time) int {
 	r.mu.Lock()
 	defer r.mu.Unlock()

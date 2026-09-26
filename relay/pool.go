@@ -113,6 +113,7 @@ func (p *pool) syncOnce() {
 
 	// 2. 回收长期消失的端口
 	slots := p.store.Slots()
+	reclaimedAny := false
 	for _, sl := range slots {
 		if _, ok := present[sl.InstanceName]; ok {
 			continue
@@ -122,8 +123,12 @@ func (p *pool) syncOnce() {
 				log.Printf("reclaimed slot %d for inactive spot %s", sl.Port, sl.InstanceName)
 				delete(p.regionHint, sl.InstanceName)
 				delete(p.primaryHealthySince, sl.InstanceName)
+				reclaimedAny = true
 			}
 		}
+	}
+	if reclaimedAny {
+		_ = p.store.Save()
 	}
 
 	// 3. 计算服务决策
@@ -294,4 +299,20 @@ func stringOrEmpty(t *target) string {
 		return ""
 	}
 	return t.Serving
+}
+
+func (p *pool) removeSpot(instanceName string) {
+	p.mu.Lock()
+	delete(p.present, instanceName)
+	delete(p.regionHint, instanceName)
+	delete(p.primaryHealthySince, instanceName)
+	p.mu.Unlock()
+	p.syncOnce()
+}
+
+func (p *pool) removeSlot(port int) {
+	p.mu.Lock()
+	delete(p.targets, port)
+	p.mu.Unlock()
+	p.syncOnce()
 }

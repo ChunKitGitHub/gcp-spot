@@ -94,7 +94,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
                 <th class="p-3">公网出口 IP</th>
                 <th class="p-3">状态</th>
                 <th class="p-3">最近心跳</th>
-                <th class="p-3 text-right">内网拨号测试</th>
+                <th class="p-3 text-right">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
@@ -110,11 +110,15 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
                   </span>
                 </td>
                 <td class="p-3 text-xs text-slate-400">{{ formatTime(s.last_seen_at) }}</td>
-                <td class="p-3 text-right">
+                <td class="p-3 text-right space-x-2">
                   <button @click="testSpot(s.instance_name)" 
                           :disabled="spotTesting[s.instance_name]"
                           class="text-xs bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 px-2.5 py-1 rounded transition">
-                    {{ spotTesting[s.instance_name] || '⚡ 测试内网 1080' }}
+                    {{ spotTesting[s.instance_name] || '⚡ 测试 1080' }}
+                  </button>
+                  <button @click="deleteSpot(s.instance_name)"
+                          class="text-xs bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded transition">
+                    删除
                   </button>
                 </td>
               </tr>
@@ -142,6 +146,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
                 <th class="p-3">当前内网 IP</th>
                 <th class="p-3">当前出口 IP</th>
                 <th class="p-3">接管状态</th>
+                <th class="p-3 text-right">操作</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-800">
@@ -155,9 +160,15 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
                   <span v-if="!sl.is_backup" class="text-emerald-400 text-xs">● 主节点正常</span>
                   <span v-else class="text-amber-400 text-xs font-medium">⚠️ 备用接管中: {{ sl.reason }}</span>
                 </td>
+                <td class="p-3 text-right">
+                  <button @click="deleteSlot(sl.port)" 
+                          class="text-xs bg-rose-600/30 hover:bg-rose-600 text-rose-300 hover:text-white px-2.5 py-1 rounded transition">
+                    释放槽位
+                  </button>
+                </td>
               </tr>
               <tr v-if="slots.length === 0">
-                <td colspan="6" class="p-6 text-center text-slate-500">暂无槽位数据</td>
+                <td colspan="7" class="p-6 text-center text-slate-500">暂无槽位数据</td>
               </tr>
             </tbody>
           </table>
@@ -380,6 +391,32 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
           }
         };
 
+        const deleteSpot = async (name) => {
+          if (!confirm(`确定删除已销毁的 Spot 节点 ${name} 及其关联槽位？`)) return;
+          try {
+            const res = await fetch(`/api/spots/${encodeURIComponent(name)}`, {
+              method: 'DELETE',
+              headers: headers()
+            });
+            if (res.ok) refreshData();
+          } catch (e) {
+            alert(e);
+          }
+        };
+
+        const deleteSlot = async (port) => {
+          if (!confirm(`确定手动释放并删除槽位 ${port}？`)) return;
+          try {
+            const res = await fetch(`/api/slots/${port}`, {
+              method: 'DELETE',
+              headers: headers()
+            });
+            if (res.ok) refreshData();
+          } catch (e) {
+            alert(e);
+          }
+        };
+
         const getSlotExitIP = (slotPort) => {
           const sl = slots.value.find(s => s.port === slotPort);
           return sl ? sl.exit_ip : '-';
@@ -458,7 +495,7 @@ var QRCode;!function(){function a(a){this.mode=c.MODE_8BIT_BYTE,this.data=a,this
         return {
           adminToken, authorized, spots, slots, users, stats,
           bootstrapCmd, copyStatus, showAddUserModal, newUser, qrModal,
-          spotTesting, testSpot,
+          spotTesting, testSpot, deleteSpot, deleteSlot,
           saveToken, logout, refreshData, createUser, deleteUser,
           getSlotExitIP, copyText, showQR, formatTime
         };

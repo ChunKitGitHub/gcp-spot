@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -48,6 +49,8 @@ func newAdminServer(config Config, spots *spotRegistry, pool *pool, users *vless
 
 	// 管理接口 (ADMIN_TOKEN 验证)
 	mux.HandleFunc("GET /api/status", s.requireAdmin(s.handleStatus))
+	mux.HandleFunc("DELETE /api/spots/{name}", s.requireAdmin(s.handleDeleteSpot))
+	mux.HandleFunc("DELETE /api/slots/{port}", s.requireAdmin(s.handleDeleteSlot))
 	mux.HandleFunc("GET /api/users", s.requireAdmin(s.handleListUsers))
 	mux.HandleFunc("POST /api/users", s.requireAdmin(s.handleCreateUser))
 	mux.HandleFunc("DELETE /api/users/{uuid}", s.requireAdmin(s.handleDeleteUser))
@@ -285,6 +288,32 @@ func (s *adminServer) handleDeleteUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "User not found", http.StatusNotFound)
 		return
 	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *adminServer) handleDeleteSpot(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	if name == "" {
+		http.Error(w, "Instance name is required", http.StatusBadRequest)
+		return
+	}
+	s.spots.Remove(name)
+	s.store.ReclaimSlotByInstance(name)
+	_ = s.store.Save()
+	s.pool.removeSpot(name)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (s *adminServer) handleDeleteSlot(w http.ResponseWriter, r *http.Request) {
+	portStr := r.PathValue("port")
+	port, err := strconv.Atoi(portStr)
+	if err != nil {
+		http.Error(w, "Invalid port", http.StatusBadRequest)
+		return
+	}
+	s.store.ReclaimSlot(port)
+	_ = s.store.Save()
+	s.pool.removeSlot(port)
 	w.WriteHeader(http.StatusNoContent)
 }
 

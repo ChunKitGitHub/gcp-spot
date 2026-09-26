@@ -160,6 +160,19 @@ func (s *Store) ReclaimSlot(port int) bool {
 	return false
 }
 
+func (s *Store) ReclaimSlotByInstance(instanceName string) []int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	var ports []int
+	for port, sl := range s.slots {
+		if sl.InstanceName == instanceName {
+			delete(s.slots, port)
+			ports = append(ports, port)
+		}
+	}
+	return ports
+}
+
 func (s *Store) Users() []UserRecord {
 	s.mu.Lock()
 	defer s.mu.Unlock()
