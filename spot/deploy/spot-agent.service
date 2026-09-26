@@ -1,0 +1,15 @@
+[Unit]
+Description=Spot Agent (Built-in SOCKS5 + Heartbeat)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/default/spot-agent
+ExecStart=/usr/local/bin/spot-agent
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=newSpot Relay (VLESS/TLS to GCP Internal SOCKS5)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/newspot-relay/env
+ExecStart=/usr/local/bin/newspot-relay
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+StateDirectory=newspot-relay
+
+[Install]
+WantedBy=multi-user.target
