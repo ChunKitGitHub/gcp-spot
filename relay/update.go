@@ -87,10 +87,13 @@ func runSelfUpdate() {
 			newBinPath = targetPath
 		} else if strings.HasPrefix(baseName, "spot-agent-") {
 			targetPath := filepath.Join(agentBinDir, baseName)
-			f, err := os.OpenFile(targetPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
+			tmpAgent, err := os.CreateTemp(agentBinDir, ".spot-agent-new-*")
 			if err == nil {
-				_, _ = io.Copy(f, tr)
-				f.Close()
+				_, _ = io.Copy(tmpAgent, tr)
+				_ = tmpAgent.Chmod(0755)
+				_ = tmpAgent.Close()
+				_ = os.Remove(targetPath)
+				_ = os.Rename(tmpAgent.Name(), targetPath)
 			}
 		}
 	}
@@ -101,19 +104,41 @@ func runSelfUpdate() {
 	}
 
 	destPath := "/usr/local/bin/newspot-relay"
+	destDir := filepath.Dir(destPath)
+	_ = os.MkdirAll(destDir, 0755)
 	fmt.Println("正在替换二进制文件...")
-	if err := os.Rename(newBinPath, destPath); err != nil {
-		srcF, _ := os.Open(newBinPath)
-		dstF, err := os.OpenFile(destPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0755)
-		if err != nil {
-			fmt.Printf("❌ 覆盖目标文件失败: %v\n", err)
-			os.Exit(1)
-		}
-		_, _ = io.Copy(dstF, srcF)
-		srcF.Close()
-		dstF.Close()
+
+	// 在目标同目录下创建临时文件，避免跨文件系统 (EXDEV) 无法 rename 的问题
+	tmpDest, err := os.CreateTemp(destDir, ".newspot-relay-new-*")
+	if err != nil {
+		fmt.Printf("❌ 创建临时文件失败: %v\n", err)
+		os.Exit(1)
 	}
-	_ = os.Chmod(destPath, 0755)
+	defer os.Remove(tmpDest.Name())
+
+	srcF, err := os.Open(newBinPath)
+	if err != nil {
+		fmt.Printf("❌ 读取新二进制失败: %v\n", err)
+		os.Exit(1)
+	}
+	if _, err := io.Copy(tmpDest, srcF); err != nil {
+		srcF.Close()
+		tmpDest.Close()
+		fmt.Printf("❌ 写入新二进制失败: %v\n", err)
+		os.Exit(1)
+	}
+	srcF.Close()
+	_ = tmpDest.Chmod(0755)
+	_ = tmpDest.Close()
+
+	// Linux 下替换正在运行中的二进制：
+	// 不能以写/截断模式直接打开正在运行中的文件（会报 text file busy）。
+	// 必须在同一文件系统下使用 unlink (os.Remove) 并 rename 覆盖。
+	_ = os.Remove(destPath)
+	if err := os.Rename(tmpDest.Name(), destPath); err != nil {
+		fmt.Printf("❌ 替换目标文件失败: %v\n", err)
+		os.Exit(1)
+	}
 
 	// 创建 relay 快捷方式
 	_ = os.Remove("/usr/local/bin/relay")

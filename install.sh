@@ -37,6 +37,7 @@ if [ ! -d "${UNPACKED_DIR}" ]; then
     UNPACKED_DIR="${TEMP_DIR}"
 fi
 
+rm -f /usr/local/bin/newspot-relay /usr/local/bin/relay
 install -m 0755 "${UNPACKED_DIR}/newspot-relay" /usr/local/bin/newspot-relay
 # 创建快捷命令 relay -> newspot-relay
 ln -sf /usr/local/bin/newspot-relay /usr/local/bin/relay

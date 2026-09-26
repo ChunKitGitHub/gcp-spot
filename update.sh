@@ -10,13 +10,6 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-# 如果系统中已有 relay 命令，直接优先使用 relay update
-if command -v relay >/dev/null 2>&1; then
-    echo "检测到 relay 工具，执行原生更新..."
-    relay update
-    exit 0
-fi
-
 ARCH="$(uname -m)"
 case "${ARCH}" in
     x86_64)        ARCH_NAME="amd64" ;;
@@ -47,6 +40,8 @@ if systemctl is-active --quiet newspot-relay 2>/dev/null; then
     systemctl stop newspot-relay
 fi
 
+# 删除旧文件，防止运行中覆盖出现 text file busy
+rm -f /usr/local/bin/newspot-relay /usr/local/bin/relay
 install -m 0755 "${UNPACKED_DIR}/newspot-relay" /usr/local/bin/newspot-relay
 ln -sf /usr/local/bin/newspot-relay /usr/local/bin/relay
 
